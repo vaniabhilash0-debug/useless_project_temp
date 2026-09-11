@@ -2,31 +2,31 @@
 
 
 
-# [Project Name] 🎯
+# [Treasure Runner] 🎯
 
 
 ## Basic Details
-### Team Name: [Name]
+### Team Name: [iccs]
 
 
 ### Team Members
-- Team Lead: [Name] - [College]
-- Member 2: [Name] - [College]
-- Member 3: [Name] - [College]
+- Team Lead: [vaniabhilash] - [iccs college]
+- Member 2: [sreepriya] - [iccs College]
 
 ### Project Description
-[2-3 lines about what your project does]
+[treasure runner is a simple and fun game where the player runs through obstacles and collects treasures.
+The goal is to collect as many treasures as possible while avoiding obstacles]
 
 ### The Problem (that doesn't exist)
 [What ridiculous problem are you solving?]
 
 ### The Solution (that nobody asked for)
-[How are you solving it? Keep it fun!]
+[we solve this "problem" by creating a fun game where players collect treasures,avoid   obstacles,and try to get highest score!]
 
 ## Technical Details
 ### Technologies/Components Used
 For Software:
-- [Languages used]
+- [html]
 - [Frameworks used]
 - [Libraries used]
 - [Tools used]
@@ -39,10 +39,10 @@ For Hardware:
 ### Implementation
 For Software:
 # Installation
-[commands]
+[no installation required]
 
 # Run
-[commands]
+[open the index.html file in a web browser]
 
 ### Project Documentation
 For Software:
