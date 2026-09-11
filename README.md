@@ -2,7 +2,7 @@
 
 
 
-# Gaming 🎯
+#Treasure Gaming 🎯
 
 
 ## Basic Details
@@ -10,24 +10,25 @@
 
 
 ### Team Members
-- Team Lead: [vani abhilash] - [College]
-- Member 2: [] - [College]
+- Team Lead: [vani abhilash] - [Iccs]
+- Member 2: [sreepriya] - [Iccs]
 - Member 3: [Name] - [College]
 
 ### Project Description
-[2-3 lines about what your project does]
+[Treasure Runner is a simple and fun game where the player runs through obstacles and collects treasures. The goal is to collect as many treasures as possible while avoiding obstacles.]
 
 ### The Problem (that doesn't exist)
-[What ridiculous problem are you solving?]
+[People have too much free time and nothing useless to do.
+They need a completely unnecessary treasure-running game!]
 
 ### The Solution (that nobody asked for)
-[How are you solving it? Keep it fun!]
+[A fun runner game where the player collects treasures, avoids obstacles, and tries to achieve the highest score.]
 
 ## Technical Details
 ### Technologies/Components Used
 For Software:
-- [Languages used]
-- [Frameworks used]
+- [html]
+- [html]
 - [Libraries used]
 - [Tools used]
 
@@ -36,61 +37,26 @@ For Hardware:
 - [List specifications]
 - [List tools required]
 
-### Implementation
-For Software:
-# Installation
-[commands]
-
-# Run
-[commands]
 
 ### Project Documentation
 For Software:
 
 # Screenshots (Add at least 3)
-![Screenshot1](Add screenshot 1 here with proper name)
+![Screenshot1]([https://drive.google.com/file/d/11Bbn7RUpbSOnp8mAF6ebKdECAPBSZpuV/view?usp=drive_linke](https://drive.google.com/file/d/1ObTrhF4_WyPYCB6phJaUQk_UNtV67x5V/view?usp=drive_link))
 *Add caption explaining what this shows*
 
-![Screenshot2](Add screenshot 2 here with proper name)
-*Add caption explaining what this shows*
-
-![Screenshot3](Add screenshot 3 here with proper name)
-*Add caption explaining what this shows*
-
-# Diagrams
-![Workflow](Add your workflow/architecture diagram here)
-*Add caption explaining your workflow*
-
-For Hardware:
-
-# Schematic & Circuit
-![Circuit](Add your circuit diagram here)
-*Add caption explaining connections*
-
-![Schematic](Add your schematic diagram here)
-*Add caption explaining the schematic*
-
-# Build Photos
-![Components](Add photo of your components here)
-*List out all components shown*
-
-![Build](Add photos of build process here)
-*Explain the build steps*
-
-![Final](Add photo of final product here)
-*Explain the final build*
 
 ### Project Demo
 # Video
-[Add your demo video link here]
+[https://drive.google.com/file/d/11Bbn7RUpbSOnp8mAF6ebKdECAPBSZpuV/view?usp=drive_link]
 *Explain what the video demonstrates*
 
 # Additional Demos
 [Add any extra demo materials/links]
 
 ## Team Contributions
-- [Name 1]: [Specific contributions]
-- [Name 2]: [Specific contributions]
+- [vani]: [suggested improvements to the gameplay]
+- [Name 2]: [planned the project idea and game concept]
 - [Name 3]: [Specific contributions]
 
 ---
