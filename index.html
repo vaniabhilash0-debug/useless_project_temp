@@ -1,70 +1,170 @@
+```html
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Treasure Runner</title>
-    <style>
-        body {
-            margin: 0;
-            background: #222;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-family: Arial, sans-serif;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Treasure Runner</title>
 
-        canvas {
-            border: 3px solid white;
-            background: #50aaff;
-        }
-    </style>
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        background:
+            radial-gradient(circle at top, #263b63, #101522);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+    }
+
+    .game-wrapper {
+        position: relative;
+        width: min(100vw, 1000px);
+        padding: 15px;
+    }
+
+    canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 4px solid #fff;
+        border-radius: 18px;
+        box-shadow:
+            0 0 0 4px rgba(0,0,0,.25),
+            0 20px 50px rgba(0,0,0,.5);
+        background: #70cfff;
+    }
+
+    .title {
+        position: absolute;
+        top: 28px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: white;
+        font-size: 22px;
+        font-weight: bold;
+        text-shadow: 2px 3px 4px rgba(0,0,0,.5);
+        pointer-events: none;
+        letter-spacing: 2px;
+    }
+
+    .instructions {
+        position: absolute;
+        bottom: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: rgba(255,255,255,.9);
+        background: rgba(0,0,0,.3);
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 14px;
+        pointer-events: none;
+    }
+</style>
 </head>
 
 <body>
 
-<canvas id="game" width="800" height="500"></canvas>
+<div class="game-wrapper">
+    <canvas id="game" width="900" height="550"></canvas>
+
+    <div class="title">🏴‍☠️ TREASURE RUNNER</div>
+    <div class="instructions">Arrow Keys / WASD to move</div>
+</div>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// Player
+let keys = {};
+let score = 0;
+let lives = 3;
+let gameOver = false;
+let particles = [];
+let clouds = [];
+
+/* =========================
+   PLAYER
+========================= */
+
 let player = {
     x: 100,
     y: 400,
-    width: 40,
-    height: 40,
-    speed: 5
+    width: 42,
+    height: 48,
+    speed: 5,
+    bob: 0
 };
 
-// Treasure
+/* =========================
+   TREASURE
+========================= */
+
 let treasure = {
-    x: Math.random() * 550 + 200,
-    y: Math.random() * 300 + 100,
-    width: 25,
-    height: 25
+    x: 600,
+    y: 260,
+    width: 38,
+    height: 34,
+    angle: 0
 };
 
-// Obstacle
+/* =========================
+   ENEMY
+========================= */
+
 let obstacle = {
-    x: 700,
+    x: 850,
     y: 400,
-    width: 40,
-    height: 40,
-    speed: 5
+    width: 48,
+    height: 48,
+    speed: 4
 };
 
-let score = 0;
+/* =========================
+   CLOUDS
+========================= */
 
-let keys = {};
+for (let i = 0; i < 7; i++) {
+    clouds.push({
+        x: Math.random() * canvas.width,
+        y: 40 + Math.random() * 130,
+        size: 25 + Math.random() * 35,
+        speed: 0.2 + Math.random() * 0.4
+    });
+}
 
-document.addEventListener("keydown", function(e) {
+/* =========================
+   INPUT
+========================= */
+
+document.addEventListener("keydown", e => {
     keys[e.key] = true;
+
+    if (
+        ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "]
+        .includes(e.key)
+    ) {
+        e.preventDefault();
+    }
+
+    if (gameOver && (e.key === " " || e.key === "Enter")) {
+        restartGame();
+    }
 });
 
-document.addEventListener("keyup", function(e) {
+document.addEventListener("keyup", e => {
     keys[e.key] = false;
 });
+
+/* =========================
+   HELPERS
+========================= */
 
 function collision(a, b) {
     return (
@@ -75,108 +175,867 @@ function collision(a, b) {
     );
 }
 
+function randomTreasurePosition() {
+    treasure.x = Math.random() * 650 + 180;
+    treasure.y = Math.random() * 310 + 120;
+}
+
+function createParticles(x, y, color) {
+    for (let i = 0; i < 18; i++) {
+        particles.push({
+            x,
+            y,
+            vx: (Math.random() - 0.5) * 7,
+            vy: (Math.random() - 0.5) * 7,
+            life: 40 + Math.random() * 25,
+            color
+        });
+    }
+}
+
+function updateParticles() {
+    for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.12;
+        p.life--;
+
+        if (p.life <= 0) {
+            particles.splice(i, 1);
+        }
+    }
+}
+
+function drawParticles() {
+    particles.forEach(p => {
+        ctx.globalAlpha = Math.max(0, p.life / 60);
+        ctx.fillStyle = p.color;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    ctx.globalAlpha = 1;
+}
+
+/* =========================
+   UPDATE
+========================= */
+
 function update() {
 
-    // Player movement
-    if (keys["ArrowLeft"]) {
+    if (gameOver) {
+        updateParticles();
+        return;
+    }
+
+    /* Player movement */
+
+    if (keys["ArrowLeft"] || keys["a"]) {
         player.x -= player.speed;
     }
 
-    if (keys["ArrowRight"]) {
+    if (keys["ArrowRight"] || keys["d"]) {
         player.x += player.speed;
     }
 
-    if (keys["ArrowUp"]) {
+    if (keys["ArrowUp"] || keys["w"]) {
         player.y -= player.speed;
     }
 
-    if (keys["ArrowDown"]) {
+    if (keys["ArrowDown"] || keys["s"]) {
         player.y += player.speed;
     }
 
-    // Keep player inside screen
-    if (player.x < 0) player.x = 0;
-    if (player.x + player.width > canvas.width)
-        player.x = canvas.width - player.width;
+    /* Keep player inside arena */
 
-    if (player.y < 0) player.y = 0;
-    if (player.y + player.height > canvas.height)
-        player.y = canvas.height - player.height;
+    player.x = Math.max(
+        10,
+        Math.min(canvas.width - player.width - 10, player.x)
+    );
 
-    // Obstacle movement
+    player.y = Math.max(
+        80,
+        Math.min(canvas.height - player.height - 20, player.y)
+    );
+
+    player.bob += 0.15;
+
+    /* Enemy */
+
     obstacle.x -= obstacle.speed;
 
     if (obstacle.x + obstacle.width < 0) {
-        obstacle.x = canvas.width;
-        obstacle.y = Math.random() * 400;
+        obstacle.x = canvas.width + 50;
+        obstacle.y = Math.random() * 360 + 100;
+
+        // Enemy becomes faster as score increases
+        obstacle.speed = Math.min(10, 4 + score * 0.25);
     }
 
-    // Collect treasure
+    /* Clouds */
+
+    clouds.forEach(cloud => {
+        cloud.x -= cloud.speed;
+
+        if (cloud.x < -100) {
+            cloud.x = canvas.width + 100;
+        }
+    });
+
+    /* Treasure rotation */
+
+    treasure.angle += 0.04;
+
+    /* Treasure collision */
+
     if (collision(player, treasure)) {
+
         score++;
 
-        treasure.x = Math.random() * 550 + 200;
-        treasure.y = Math.random() * 350 + 50;
+        createParticles(
+            treasure.x + treasure.width / 2,
+            treasure.y + treasure.height / 2,
+            "#ffd700"
+        );
+
+        randomTreasurePosition();
+
+        // Slightly increase player speed
+        player.speed = Math.min(8, 5 + score * 0.08);
     }
 
-    // Game over
+    /* Enemy collision */
+
     if (collision(player, obstacle)) {
-        alert("Game Over! Score: " + score);
+
+        lives--;
+
+        createParticles(
+            player.x + player.width / 2,
+            player.y + player.height / 2,
+            "#ff4b4b"
+        );
 
         player.x = 100;
         player.y = 400;
-        obstacle.x = 700;
-        score = 0;
+
+        obstacle.x = canvas.width + 100;
+
+        if (lives <= 0) {
+            gameOver = true;
+        }
     }
+
+    updateParticles();
 }
+
+/* =========================
+   BACKGROUND
+========================= */
+
+function drawBackground() {
+
+    /* Sky gradient */
+
+    let sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
+
+    sky.addColorStop(0, "#55c7ff");
+    sky.addColorStop(0.55, "#8de0ff");
+    sky.addColorStop(1, "#d8f7ff");
+
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    /* Sun glow */
+
+    let glow = ctx.createRadialGradient(
+        750, 95, 10,
+        750, 95, 100
+    );
+
+    glow.addColorStop(0, "rgba(255,255,190,.9)");
+    glow.addColorStop(1, "rgba(255,255,190,0)");
+
+    ctx.fillStyle = glow;
+    ctx.fillRect(650, 0, 200, 200);
+
+    /* Sun */
+
+    ctx.fillStyle = "#ffe66d";
+    ctx.beginPath();
+    ctx.arc(750, 95, 42, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Mountains */
+
+    drawMountain(0, 300, 180, 120, "#699bb2");
+    drawMountain(130, 300, 220, 150, "#578aa4");
+    drawMountain(310, 300, 180, 115, "#6fa3b5");
+    drawMountain(470, 300, 250, 155, "#4f879e");
+    drawMountain(700, 300, 220, 130, "#6798aa");
+
+    /* Snow caps */
+
+    ctx.fillStyle = "#eafaff";
+
+    drawSnowCap(180, 180, 130, 120);
+    drawSnowCap(700, 170, 130, 130);
+
+    /* Distant hills */
+
+    ctx.fillStyle = "#5fa65c";
+
+    ctx.beginPath();
+    ctx.moveTo(0, 360);
+    ctx.quadraticCurveTo(120, 300, 250, 360);
+    ctx.quadraticCurveTo(390, 290, 540, 360);
+    ctx.quadraticCurveTo(700, 300, 900, 355);
+    ctx.lineTo(900, 550);
+    ctx.lineTo(0, 550);
+    ctx.fill();
+
+    /* Ground */
+
+    ctx.fillStyle = "#65b84f";
+    ctx.fillRect(0, 400, canvas.width, 150);
+
+    /* Ground shadow */
+
+    ctx.fillStyle = "rgba(0,0,0,.08)";
+    ctx.fillRect(0, 400, canvas.width, 10);
+
+    /* Grass patches */
+
+    for (let x = 10; x < canvas.width; x += 35) {
+        drawGrass(x, 425 + Math.sin(x) * 8);
+    }
+
+    /* Path */
+
+    ctx.fillStyle = "#d6b36a";
+
+    ctx.beginPath();
+    ctx.moveTo(0, 500);
+    ctx.quadraticCurveTo(250, 430, 500, 500);
+    ctx.quadraticCurveTo(700, 550, 900, 470);
+    ctx.lineTo(900, 550);
+    ctx.lineTo(0, 550);
+    ctx.fill();
+
+    /* Small rocks */
+
+    drawRock(230, 460);
+    drawRock(680, 440);
+    drawRock(520, 485);
+
+    /* Trees */
+
+    drawTree(55, 335, 1);
+    drawTree(820, 330, 1.1);
+    drawTree(145, 350, .8);
+}
+
+/* =========================
+   MOUNTAINS
+========================= */
+
+function drawMountain(x, base, width, height, color) {
+
+    ctx.fillStyle = color;
+
+    ctx.beginPath();
+    ctx.moveTo(x, base);
+    ctx.lineTo(x + width / 2, base - height);
+    ctx.lineTo(x + width, base);
+    ctx.closePath();
+    ctx.fill();
+}
+
+function drawSnowCap(x, y, width, height) {
+
+    ctx.beginPath();
+
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + width / 2, y - height);
+    ctx.lineTo(x + width, y);
+
+    ctx.lineTo(x + width * .75, y - 15);
+    ctx.lineTo(x + width * .58, y - 5);
+    ctx.lineTo(x + width * .5, y - 35);
+    ctx.lineTo(x + width * .38, y - 8);
+    ctx.lineTo(x + width * .22, y - 18);
+
+    ctx.closePath();
+    ctx.fill();
+}
+
+/* =========================
+   CLOUDS
+========================= */
+
+function drawClouds() {
+
+    clouds.forEach(cloud => {
+
+        ctx.fillStyle = "rgba(255,255,255,.82)";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            cloud.x,
+            cloud.y,
+            cloud.size,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.arc(
+            cloud.x + cloud.size * .8,
+            cloud.y - 10,
+            cloud.size * .8,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.arc(
+            cloud.x + cloud.size * 1.5,
+            cloud.y,
+            cloud.size * .65,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    });
+}
+
+/* =========================
+   TREE
+========================= */
+
+function drawTree(x, y, scale) {
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(scale, scale);
+
+    /* Shadow */
+
+    ctx.fillStyle = "rgba(0,0,0,.15)";
+    ctx.beginPath();
+    ctx.ellipse(0, 25, 38, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Trunk */
+
+    ctx.fillStyle = "#754522";
+    ctx.fillRect(-9, -75, 18, 100);
+
+    /* Tree leaves */
+
+    ctx.fillStyle = "#217a3b";
+
+    ctx.beginPath();
+    ctx.arc(-22, -75, 28, 0, Math.PI * 2);
+    ctx.arc(20, -75, 30, 0, Math.PI * 2);
+    ctx.arc(0, -105, 34, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#35a852";
+
+    ctx.beginPath();
+    ctx.arc(-8, -112, 22, 0, Math.PI * 2);
+    ctx.arc(25, -92, 16, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+}
+
+/* =========================
+   GRASS
+========================= */
+
+function drawGrass(x, y) {
+
+    ctx.strokeStyle = "#318c3c";
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - 5, y - 10);
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + 4, y - 12);
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + 8, y - 7);
+    ctx.stroke();
+}
+
+/* =========================
+   ROCK
+========================= */
+
+function drawRock(x, y) {
+
+    ctx.fillStyle = "#77878b";
+
+    ctx.beginPath();
+    ctx.ellipse(x, y, 15, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#9caeb1";
+
+    ctx.beginPath();
+    ctx.ellipse(x - 4, y - 3, 7, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+/* =========================
+   PLAYER
+========================= */
+
+function drawPlayer() {
+
+    let bounce = Math.sin(player.bob) * 2;
+
+    ctx.save();
+
+    ctx.translate(
+        player.x + player.width / 2,
+        player.y + bounce
+    );
+
+    /* Shadow */
+
+    ctx.fillStyle = "rgba(0,0,0,.2)";
+    ctx.beginPath();
+    ctx.ellipse(0, 25, 24, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Legs */
+
+    ctx.fillStyle = "#3a3a3a";
+
+    ctx.fillRect(-13, 12, 10, 18);
+    ctx.fillRect(3, 12, 10, 18);
+
+    /* Shoes */
+
+    ctx.fillStyle = "#252525";
+
+    ctx.beginPath();
+    ctx.ellipse(-10, 30, 11, 5, 0, 0, Math.PI * 2);
+    ctx.ellipse(10, 30, 11, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Body */
+
+    ctx.fillStyle = "#278f4c";
+
+    ctx.beginPath();
+    ctx.roundRect(-19, -12, 38, 32, 9);
+    ctx.fill();
+
+    /* Backpack */
+
+    ctx.fillStyle = "#70452a";
+    ctx.fillRect(14, -8, 10, 25);
+
+    /* Head */
+
+    ctx.fillStyle = "#f3b27d";
+
+    ctx.beginPath();
+    ctx.arc(0, -27, 18, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Hair */
+
+    ctx.fillStyle = "#4b2c20";
+
+    ctx.beginPath();
+    ctx.arc(0, -34, 18, Math.PI, Math.PI * 2);
+    ctx.fill();
+
+    /* Hat */
+
+    ctx.fillStyle = "#8b4c2a";
+
+    ctx.beginPath();
+    ctx.arc(0, -42, 17, Math.PI, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillRect(-23, -43, 46, 6);
+
+    /* Eyes */
+
+    ctx.fillStyle = "#222";
+
+    ctx.beginPath();
+    ctx.arc(-6, -27, 2.5, 0, Math.PI * 2);
+    ctx.arc(6, -27, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Smile */
+
+    ctx.strokeStyle = "#7b3825";
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.arc(0, -25, 7, 0.2, Math.PI - 0.2);
+    ctx.stroke();
+
+    /* Arms */
+
+    ctx.strokeStyle = "#f3b27d";
+    ctx.lineWidth = 8;
+    ctx.lineCap = "round";
+
+    ctx.beginPath();
+    ctx.moveTo(-17, -3);
+    ctx.lineTo(-27, 8);
+    ctx.moveTo(17, -3);
+    ctx.lineTo(27, 8);
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+/* =========================
+   TREASURE CHEST
+========================= */
+
+function drawTreasure() {
+
+    ctx.save();
+
+    ctx.translate(
+        treasure.x + treasure.width / 2,
+        treasure.y + treasure.height / 2
+    );
+
+    let pulse = 1 + Math.sin(treasure.angle * 3) * 0.05;
+
+    ctx.scale(pulse, pulse);
+
+    /* Glow */
+
+    ctx.shadowColor = "#ffe600";
+    ctx.shadowBlur = 18;
+
+    /* Chest body */
+
+    ctx.fillStyle = "#8b4a20";
+
+    ctx.beginPath();
+    ctx.roundRect(-19, -3, 38, 23, 5);
+    ctx.fill();
+
+    /* Chest lid */
+
+    ctx.fillStyle = "#b86a28";
+
+    ctx.beginPath();
+    ctx.roundRect(-19, -15, 38, 18, 7);
+    ctx.fill();
+
+    /* Gold bands */
+
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = "#ffd43b";
+
+    ctx.fillRect(-18, -3, 36, 5);
+    ctx.fillRect(-4, -14, 8, 33);
+
+    /* Lock */
+
+    ctx.fillStyle = "#ffe16b";
+
+    ctx.beginPath();
+    ctx.arc(0, 5, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#8b4a20";
+    ctx.fillRect(-2, 4, 4, 8);
+
+    /* Sparkles */
+
+    ctx.fillStyle = "#fff7a0";
+
+    for (let i = 0; i < 4; i++) {
+
+        let a = treasure.angle + i * Math.PI / 2;
+
+        let sx = Math.cos(a) * 30;
+        let sy = Math.sin(a) * 30;
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    ctx.restore();
+}
+
+/* =========================
+   ENEMY
+========================= */
+
+function drawObstacle() {
+
+    ctx.save();
+
+    ctx.translate(
+        obstacle.x + obstacle.width / 2,
+        obstacle.y + obstacle.height / 2
+    );
+
+    /* Shadow */
+
+    ctx.fillStyle = "rgba(0,0,0,.2)";
+    ctx.beginPath();
+    ctx.ellipse(0, 26, 25, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Body */
+
+    ctx.fillStyle = "#d83b45";
+
+    ctx.beginPath();
+    ctx.roundRect(-23, -20, 46, 43, 12);
+    ctx.fill();
+
+    /* Horns */
+
+    ctx.fillStyle = "#812b34";
+
+    ctx.beginPath();
+    ctx.moveTo(-17, -17);
+    ctx.lineTo(-25, -31);
+    ctx.lineTo(-7, -22);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(17, -17);
+    ctx.lineTo(25, -31);
+    ctx.lineTo(7, -22);
+    ctx.fill();
+
+    /* Eyes */
+
+    ctx.fillStyle = "white";
+
+    ctx.beginPath();
+    ctx.arc(-9, -5, 7, 0, Math.PI * 2);
+    ctx.arc(9, -5, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#222";
+
+    ctx.beginPath();
+    ctx.arc(-9, -4, 3, 0, Math.PI * 2);
+    ctx.arc(9, -4, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Angry eyebrows */
+
+    ctx.strokeStyle = "#522027";
+    ctx.lineWidth = 4;
+
+    ctx.beginPath();
+    ctx.moveTo(-15, -15);
+    ctx.lineTo(-5, -11);
+    ctx.moveTo(15, -15);
+    ctx.lineTo(5, -11);
+    ctx.stroke();
+
+    /* Mouth */
+
+    ctx.fillStyle = "#35151b";
+
+    ctx.beginPath();
+    ctx.roundRect(-12, 7, 24, 9, 5);
+    ctx.fill();
+
+    /* Teeth */
+
+    ctx.fillStyle = "white";
+
+    ctx.fillRect(-7, 7, 5, 5);
+    ctx.fillRect(2, 7, 5, 5);
+
+    /* Feet */
+
+    ctx.fillStyle = "#812b34";
+
+    ctx.beginPath();
+    ctx.ellipse(-14, 24, 10, 5, 0, 0, Math.PI * 2);
+    ctx.ellipse(14, 24, 10, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+}
+
+/* =========================
+   UI
+========================= */
+
+function drawUI() {
+
+    /* Score panel */
+
+    ctx.fillStyle = "rgba(0,0,0,.35)";
+    ctx.beginPath();
+    ctx.roundRect(18, 18, 190, 58, 15);
+    ctx.fill();
+
+    ctx.fillStyle = "white";
+    ctx.font = "bold 24px Arial";
+    ctx.fillText("💰 " + score, 35, 54);
+
+    /* Lives */
+
+    ctx.font = "24px Arial";
+    ctx.fillText(
+        "❤️".repeat(lives) + "🖤".repeat(3 - lives),
+        105,
+        54
+    );
+
+    /* Level */
+
+    let level = Math.floor(score / 5) + 1;
+
+    ctx.fillStyle = "rgba(0,0,0,.35)";
+    ctx.beginPath();
+    ctx.roundRect(700, 18, 175, 58, 15);
+    ctx.fill();
+
+    ctx.fillStyle = "white";
+    ctx.font = "bold 20px Arial";
+    ctx.fillText("LEVEL " + level, 725, 54);
+}
+
+/* =========================
+   GAME OVER
+========================= */
+
+function drawGameOver() {
+
+    if (!gameOver) return;
+
+    ctx.fillStyle = "rgba(5,10,20,.72)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    /* Panel */
+
+    ctx.fillStyle = "#162238";
+
+    ctx.beginPath();
+    ctx.roundRect(
+        canvas.width / 2 - 220,
+        canvas.height / 2 - 130,
+        440,
+        260,
+        25
+    );
+    ctx.fill();
+
+    ctx.strokeStyle = "#ffd43b";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    ctx.textAlign = "center";
+
+    ctx.fillStyle = "#ffd43b";
+    ctx.font = "bold 42px Arial";
+    ctx.fillText(
+        "GAME OVER",
+        canvas.width / 2,
+        canvas.height / 2 - 55
+    );
+
+    ctx.fillStyle = "white";
+    ctx.font = "24px Arial";
+    ctx.fillText(
+        "Treasure collected: " + score,
+        canvas.width / 2,
+        canvas.height / 2
+    );
+
+    ctx.fillStyle = "#9ee7ff";
+    ctx.font = "18px Arial";
+    ctx.fillText(
+        "Press SPACE or ENTER to play again",
+        canvas.width / 2,
+        canvas.height / 2 + 55
+    );
+
+    ctx.textAlign = "left";
+}
+
+/* =========================
+   DRAW
+========================= */
 
 function draw() {
 
-    // Background
-    ctx.fillStyle = "#50aaff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    drawBackground();
+    drawClouds();
 
-    // Player
-    ctx.fillStyle = "#28a050";
-    ctx.fillRect(
-        player.x,
-        player.y,
-        player.width,
-        player.height
-    );
+    drawTreasure();
+    drawObstacle();
+    drawPlayer();
 
-    // Treasure
-    ctx.fillStyle = "#ffdc28";
-    ctx.fillRect(
-        treasure.x,
-        treasure.y,
-        treasure.width,
-        treasure.height
-    );
+    drawParticles();
 
-    // Obstacle
-    ctx.fillStyle = "#dc3232";
-    ctx.fillRect(
-        obstacle.x,
-        obstacle.y,
-        obstacle.width,
-        obstacle.height
-    );
-
-    // Score
-    ctx.fillStyle = "white";
-    ctx.font = "32px Arial";
-    ctx.fillText("Score: " + score, 20, 40);
+    drawUI();
+    drawGameOver();
 }
 
+/* =========================
+   RESTART
+========================= */
+
+function restartGame() {
+
+    score = 0;
+    lives = 3;
+    gameOver = false;
+
+    player.x = 100;
+    player.y = 400;
+    player.speed = 5;
+
+    obstacle.x = canvas.width + 50;
+    obstacle.speed = 4;
+
+    randomTreasurePosition();
+
+    particles = [];
+}
+
+/* =========================
+   GAME LOOP
+========================= */
+
 function gameLoop() {
+
     update();
     draw();
+
     requestAnimationFrame(gameLoop);
 }
 
+randomTreasurePosition();
 gameLoop();
+
 </script>
 
 </body>
 </html>
+```
