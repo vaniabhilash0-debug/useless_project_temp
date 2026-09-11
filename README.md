@@ -2,7 +2,7 @@
 
 
 
-# [Project Name] 🎯
+# Gaming 🎯
 
 
 ## Basic Details
