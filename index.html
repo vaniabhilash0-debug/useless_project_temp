@@ -1,57 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Treasure Runner</title>
+    <style>
+        body {
+            margin: 0;
+            background: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
 
-import pygame
-import random
+        canvas {
+            border: 3px solid white;
+            background: #50aaff;
+        }
+    </style>
+</head>
 
-pygame.init()
+<body>
 
-# Screen
-WIDTH = 800
-HEIGHT = 500
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Treasure Runner")
+<canvas id="game" width="800" height="500"></canvas>
 
-# Colors
-GREEN = (40, 160, 80)
-BLUE = (50, 150, 255)
-RED = (220, 50, 50)
-YELLOW = (255, 220, 40)
-WHITE = (255, 255, 255)
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-# Player
-player = pygame.Rect(100, 400, 40, 40)
-speed = 5
+// Player
+let player = {
+    x: 100,
+    y: 400,
+    width: 40,
+    height: 40,
+    speed: 5
+};
 
-# Treasure
-treasure = pygame.Rect(
-    random.randint(200, 750),
-    random.randint(100, 400),
-    25,
-    25
-)
+// Treasure
+let treasure = {
+    x: Math.random() * 550 + 200,
+    y: Math.random() * 300 + 100,
+    width: 25,
+    height: 25
+};
 
-# Obstacle
-obstacle = pygame.Rect(700, 400, 40, 40)
-obstacle_speed = 5
+// Obstacle
+let obstacle = {
+    x: 700,
+    y: 400,
+    width: 40,
+    height: 40,
+    speed: 5
+};
 
-score = 0
-font = pygame.font.Font(None, 36)
+let score = 0;
 
-clock = pygame.time.Clock()
-running = True
+let keys = {};
 
-while running:
+document.addEventListener("keydown", function(e) {
+    keys[e.key] = true;
+});
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+document.addEventListener("keyup", function(e) {
+    keys[e.key] = false;
+});
 
-    # Player movement
-    keys = pygame.key.get_pressed()
+function collision(a, b) {
+    return (
+        a.x < b.x + b.width &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y
+    );
+}
 
-    if keys[pygame.K_LEFT]:
-        player.x -= speed
-    if keys[pygame.K_RIGHT]:
-        player.x += speed
-    if keys[pygame.K_UP]:
-        player.y -= speed
-    if keys[pygame.K_DOWN]:
+function update() {
+
+    // Player movement
+    if (keys["ArrowLeft"]) {
+        player.x -= player.speed;
+    }
+
+    if (keys["ArrowRight"]) {
+        player.x += player.speed;
+    }
+
+    if (keys["ArrowUp"]) {
+        player.y -= player.speed;
+    }
+
+    if (keys["ArrowDown"]) {
+        player.y += player.speed;
+    }
+
+    // Keep player inside screen
+    if (player.x < 0) player.x = 0;
+    if (player.x + player.width > canvas.width)
+        player.x = canvas.width - player.width;
+
+    if (player.y < 0) player.y = 0;
+    if (player.y + player.height > canvas.height)
+        player.y = canvas.height - player.height;
+
+    // Obstacle movement
+    obstacle.x -= obstacle.speed;
+
+    if (obstacle.x + obstacle.width < 0) {
+        obstacle.x = canvas.width;
+        obstacle.y = Math.random() * 400;
+    }
+
+    // Collect treasure
+    if (collision(player, treasure)) {
+        score++;
+
+        treasure.x = Math.random() * 550 + 200;
+        treasure.y = Math.random() * 350 + 50;
+    }
+
+    // Game over
+    if (collision(player, obstacle)) {
+        alert("Game Over! Score: " + score);
+
+        player.x = 100;
+        player.y = 400;
+        obstacle.x = 700;
+        score = 0;
+    }
+}
+
+function draw() {
+
+    // Background
+    ctx.fillStyle = "#50aaff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Player
+    ctx.fillStyle = "#28a050";
+    ctx.fillRect(
+        player.x,
+        player.y,
+        player.width,
+        player.height
+    );
+
+    // Treasure
+    ctx.fillStyle = "#ffdc28";
+    ctx.fillRect(
+        treasure.x,
+        treasure.y,
+        treasure.width,
+        treasure.height
+    );
+
+    // Obstacle
+    ctx.fillStyle = "#dc3232";
+    ctx.fillRect(
+        obstacle.x,
+        obstacle.y,
+        obstacle.width,
+        obstacle.height
+    );
+
+    // Score
+    ctx.fillStyle = "white";
+    ctx.font = "32px Arial";
+    ctx.fillText("Score: " + score, 20, 40);
+}
+
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+
+</body>
+</html>

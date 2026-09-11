@@ -6,12 +6,12 @@
 
 
 ## Basic Details
-### Team Name: [Name]
+### Team Name: [iccs]
 
 
 ### Team Members
-- Team Lead: [Name] - [College]
-- Member 2: [Name] - [College]
+- Team Lead: [vani abhilash] - [College]
+- Member 2: [] - [College]
 - Member 3: [Name] - [College]
 
 ### Project Description
