@@ -12,7 +12,6 @@
 ### Team Members
 - Team Lead: [vani abhilash] - [Iccs]
 - Member 2: [sreepriya] - [Iccs]
-- Member 3: [Name] - [College]
 
 ### Project Description
 [Treasure Runner is a simple and fun game where the player runs through obstacles and collects treasures. The goal is to collect as many treasures as possible while avoiding obstacles.]
@@ -27,7 +26,6 @@ They need a completely unnecessary treasure-running game!]
 ## Technical Details
 ### Technologies/Components Used
 For Software:
-- [html]
 - [html]
 - [Libraries used]
 - [Tools used]
